@@ -1,2 +1,2 @@
-# PulleyObjC
-Objective-C port of the Pulley library
+# Pulley-ObjC
+Objective-C port of https://github.com/52inc/Pulley
