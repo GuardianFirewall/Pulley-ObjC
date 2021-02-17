@@ -1027,6 +1027,46 @@
 }
 
 /**
+Change the current drawer content view controller (The one inside the drawer)
+
+- parameter controller: The controller to replace it with
+- parameter position: The initial position of the contoller
+- parameter animated:   Whether or not to animate the change.
+- parameter completion: A block object to be executed when the animation sequence ends. The Bool indicates whether or not the animations actually finished before the completion handler was called.
+*/
+
+- (void)setDrawerContentViewController:(UIViewController *)controller position:(PulleyPosition *)position animated:(BOOL)animated completion: (PulleyAnimationCompletionBlock)block {
+    // Account for transition issue in iOS 11
+    controller.view.frame = self.drawerContentContainer.bounds;
+    [controller.view layoutIfNeeded];
+    
+    PulleyPosition *newPosition = [PulleyPosition collapsed];
+    if (position) {
+        newPosition = position;
+    } else if ([self drawerPosition]){
+        newPosition = [self drawerPosition];
+    }
+    if (animated){
+        [UIView transitionWithView:self.drawerContentContainer duration:0.5 options:UIViewAnimationOptionTransitionCrossDissolve animations:^{
+            
+            self.drawerContentViewController = controller;
+            [self setDrawerPosition:newPosition animated:false];
+        } completion:^(BOOL finished) {
+            if (block){
+                block(finished);
+            }
+        }];
+    } else {
+        self.drawerContentViewController = controller;
+        [self setDrawerPosition:newPosition animated:false completion:nil];
+        if (block){
+            block(true);
+        }
+        
+    }
+}
+
+/**
  Change the current drawer content view controller (The one inside the drawer)
  
  - parameter controller: The controller to replace it with

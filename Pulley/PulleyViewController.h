@@ -277,6 +277,16 @@ typedef NS_ENUM(NSInteger, PulleySnapMode) {
  - parameter completion: A block object to be executed when the animation sequence ends. The Bool indicates whether or not the animations actually finished before the completion handler was called.
  */
 - (void)setPrimaryContentViewController:(UIViewController*)controller animated:(BOOL)animated completion:(PulleyAnimationCompletionBlock)block;
+/**
+Change the current drawer content view controller (The one inside the drawer)
+
+- parameter controller: The controller to replace it with
+- parameter position: The initial position of the contoller
+- parameter animated:   Whether or not to animate the change.
+- parameter completion: A block object to be executed when the animation sequence ends. The Bool indicates whether or not the animations actually finished before the completion handler was called.
+*/
+
+- (void)setDrawerContentViewController:(UIViewController *)controller position:(PulleyPosition *)position animated:(BOOL)animated completion: (PulleyAnimationCompletionBlock)block;
 
 /**
  Set the drawer position, by default the change will be animated. Deprecated. Recommend switching to the other setDrawerPosition method, this one will be removed in a future release.
