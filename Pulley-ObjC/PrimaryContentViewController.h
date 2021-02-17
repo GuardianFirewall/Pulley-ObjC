@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import <MapKit/MapKit.h>
-#import "UIViewController+PulleyViewController.h"
+#import <Pulley/UIViewController+PulleyViewController.h>
 
 @interface PrimaryContentViewController : UIViewController <PulleyPrimaryContentControllerDelegate>
 @property IBOutlet MKMapView *mapView;

@@ -6,9 +6,10 @@
 //  Copyright © 2020 nito. All rights reserved.
 //
 
+#import <Pulley/PulleyViewController.h>
 #import "PrimaryTransitionTargetViewController.h"
-#import "PulleyViewController.h"
-#import "UIViewController+PulleyViewController.h"
+//#import "PulleyViewController.h"
+#import <Pulley/UIViewController+PulleyViewController.h>
 
 @interface PrimaryTransitionTargetViewController ()
 
