@@ -120,6 +120,7 @@
     CGFloat kPulleyDefaultPartialRevealHeight;
     BOOL isAnimatingDrawerPosition;
     BOOL isDetailDrawerCollapsing;
+    BOOL isChangingDrawerPosition;
 }
 @property UIView *primaryContentContainer;
 @property UIView *drawerContentContainer;
@@ -249,6 +250,7 @@
     setSnapModeToNearestPositionUnlessExceeded(20);
     isAnimatingDrawerPosition = false;
     [self setSupportedPositions:[PulleyPosition all]];
+    _positionWhenDimmingBackgroundIsTapped = [PulleyPosition collapsed];
 }
 
 - (NSArray *)supportedPulleyPositionsWithoutClosedAscending:(BOOL)isAscending {
@@ -278,12 +280,15 @@
 
 - (void)setSupportedPositions:(NSArray<PulleyPosition *> *)supportedPositions {
     if (![self isViewLoaded]) return;
+    NSArray *oldValue = _supportedPositions;
     _supportedPositions = supportedPositions;
     NSInteger count = _supportedPositions.count;
     if (count < 0) return;
-    [self.view setNeedsLayout];
+    if (oldValue != supportedPositions){
+        [self.view setNeedsLayout];
+    }
     if ([supportedPositions containsObject:self.drawerPosition]){
-        [self setDrawerPosition:self.drawerPosition animated:true];
+        [self setDrawerPosition:self.drawerPosition animated:false];
     } else {
         PulleyPosition *lowestDrawerState = [self lowestDrawerState];
         [self setDrawerPosition:lowestDrawerState animated:false];
@@ -348,6 +353,7 @@
     return 0.0;
 }
 
+
 /// Get all gesture recognizers in the drawer scrollview
 - (NSArray <UIGestureRecognizer *> *)drawerGestureRecognizers {
     return self.drawerScrollView.gestureRecognizers;
@@ -362,11 +368,10 @@
 - (void)setPulleyCurrentDisplayMode:(PulleyDisplayMode)currentDisplayMode {
     PulleyDisplayMode oldValue = _currentDisplayMode;
     _currentDisplayMode = currentDisplayMode;
-    if (self.isViewLoaded) {
-        [self.view setNeedsLayout];
-    }
-    
     if (oldValue != currentDisplayMode){
+        if (self.isViewLoaded) {
+            [self.view setNeedsLayout];
+        }
         if ([[self delegate] respondsToSelector:@selector(drawerDisplayModeDidChange:)]){
             [[self delegate] drawerDisplayModeDidChange:self];
             if ([[self drawerContentViewController] respondsToSelector:@selector(drawerDisplayModeDidChange:)]){
@@ -380,16 +385,32 @@
 }
 
 - (void)setPanelInsets:(UIEdgeInsets)panelInsets {
+    UIEdgeInsets oldValue = _panelInsets;
     _panelInsets = panelInsets;
-    if ([self isViewLoaded]){
-        [self.view setNeedsLayout];
+    if (!UIEdgeInsetsEqualToEdgeInsets(oldValue, panelInsets)){
+        if ([self isViewLoaded]){
+            [self.view setNeedsLayout];
+        }
+    }
+}
+
+- (void)setPanelWidth:(CGFloat)panelWidth {
+    CGFloat oldValue = _panelWidth;
+    _panelWidth = panelWidth;
+    if (oldValue != panelWidth){
+        if ([self isViewLoaded]){
+            [self.view setNeedsLayout];
+        }
     }
 }
 
 - (void)setDrawerTopInset:(CGFloat)drawerTopInset {
+    CGFloat oldValue = _drawerTopInset;
     _drawerTopInset = drawerTopInset;
-    if ([self isViewLoaded]){
-        [self.view setNeedsLayout];
+    if (oldValue != drawerTopInset){
+        if ([self isViewLoaded]){
+            [self.view setNeedsLayout];
+        }
     }
 }
 
@@ -810,8 +831,14 @@
     
     [self maskDrawerVisualEffectView];
     [self maskBackgroundDimmingView];
-    [self setDrawerPosition:self.drawerPosition animated:false];
     
+    // Do not need to set the the drawer position in layoutSubview if the position of the drawer is changing
+    // and the view is being layed out. If the drawer position is changing and the view is layed out (i.e.
+    // a value or constraints are being updated) the drawer is always set to the last position,
+    // and no longer scrolls properly.
+    if (isChangingDrawerPosition == false) {
+        [self setDrawerPosition:self.drawerPosition animated:false];
+    }
 }
 
 - (BOOL)detailDrawerVisibile {
@@ -865,7 +892,7 @@
 - (void)gestureRecognizer:(UITapGestureRecognizer *)gestureRecognizer {
     if (gestureRecognizer == self.dimmingViewTapRecognizer){
         if (gestureRecognizer.state == UIGestureRecognizerStateEnded){
-            [self setDrawerPosition:[PulleyPosition collapsed] animated:true];
+            [self setDrawerPosition:[self positionWhenDimmingBackgroundIsTapped] animated:true];
         }
     }
 }
@@ -1269,38 +1296,50 @@
 }
 
 - (void)setShadowOpacity:(CGFloat)shadowOpacity {
+    CGFloat oldValue = _shadowOpacity;
     _shadowOpacity = shadowOpacity;
     if (self.isViewLoaded) {
         self.drawerShadowView.layer.shadowOpacity = shadowOpacity;
         self.detailsDrawerShadowView.layer.shadowOpacity = shadowOpacity;
-        [self.view setNeedsLayout];
+        if (oldValue != shadowOpacity){
+            [self.view setNeedsLayout];
+        }
     }
 }
 
 - (void)setDrawerCornerRadius:(CGFloat)drawerCornerRadius  {
+    CGFloat oldValue = _drawerCornerRadius;
     _drawerCornerRadius = drawerCornerRadius;
-    if (self.isViewLoaded){
-        [self.view setNeedsLayout];
-        self.drawerBackgroundVisualEffectView.layer.cornerRadius = drawerCornerRadius;
-        self.detailsDrawerBackgroundVisualEffectView.layer.cornerRadius = drawerCornerRadius;
+    if (oldValue != drawerCornerRadius){
+        if (self.isViewLoaded){
+            [self.view setNeedsLayout];
+            self.drawerBackgroundVisualEffectView.layer.cornerRadius = drawerCornerRadius;
+            self.detailsDrawerBackgroundVisualEffectView.layer.cornerRadius = drawerCornerRadius;
+        }
     }
 }
 
 - (void)setShadowRadius:(CGFloat)shadowRadius {
+    CGFloat oldValue = _shadowRadius;
     _shadowRadius = shadowRadius;
-    if (self.isViewLoaded){
-        self.drawerShadowView.layer.shadowRadius = shadowRadius;
-        self.detailsDrawerShadowView.layer.shadowRadius = shadowRadius;
-        [self.view setNeedsLayout];
+    if (oldValue != shadowRadius){
+        if (self.isViewLoaded){
+            self.drawerShadowView.layer.shadowRadius = shadowRadius;
+            self.detailsDrawerShadowView.layer.shadowRadius = shadowRadius;
+            [self.view setNeedsLayout];
+        }
     }
 }
 
 - (void)setShadowOffset:(CGSize)shadowOffset {
+    CGSize oldValue = _shadowOffset;
     _shadowOffset = shadowOffset;
-    if (self.isViewLoaded) {
-        self.drawerShadowView.layer.shadowOffset = shadowOffset;
-        self.detailsDrawerShadowView.layer.shadowOffset = shadowOffset;
-        [self.view setNeedsLayout];
+    if (!CGSizeEqualToSize(oldValue, shadowOffset)){
+        if (self.isViewLoaded) {
+            self.drawerShadowView.layer.shadowOffset = shadowOffset;
+            self.detailsDrawerShadowView.layer.shadowOffset = shadowOffset;
+            [self.view setNeedsLayout];
+        }
     }
 }
 
@@ -1347,6 +1386,11 @@
  */
 
 - (UIBezierPath *)drawerMaskingPathByRoundingCorners:(UIRectCorner)corners {
+    
+    // In lue of drawerContentViewController.view.layoutIfNeeded() when ever this function is called, if the viewController is loaded setNeedsLayout
+    if ([_drawerContentViewController isViewLoaded]){
+        [_drawerContentViewController.view setNeedsLayout];
+    }
     UIBezierPath *path = [UIBezierPath new];
     CAShapeLayer *customMask = self.drawerContentViewController.view.layer.mask;
     if (customMask.path){
@@ -1813,6 +1857,12 @@
     }
 }
 
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
+    if (scrollView == _drawerScrollView){
+        isChangingDrawerPosition = true;
+    }
+}
+
 - (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset {
     
     [self prepareFeedbackGenerator];
@@ -1822,6 +1872,7 @@
         
         // Halt intertia
         *targetContentOffset = scrollView.contentOffset;
+        isChangingDrawerPosition = false;
         //targetContentOffset.pointee = scrollView.contentOffset
     }
 }

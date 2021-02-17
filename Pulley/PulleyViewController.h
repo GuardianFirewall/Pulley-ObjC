@@ -250,6 +250,9 @@ typedef NS_ENUM(NSInteger, PulleySnapMode) {
 // The feedback generator to use for drawer positon changes. Note: This is 'Any' to preserve iOS 9 compatibilty. Assign a UIFeedbackGenerator to this property. Anything else will be ignored.
 @property (nonatomic, strong) UIFeedbackGenerator *feedbackGenerator;
 
+// The position the pulley should animate to when the background is tapped. Default is collapsed.
+@property (nonatomic, strong) PulleyPosition *positionWhenDimmingBackgroundIsTapped;
+
 // Tracks whether or not the optional detail drawer is visible
 - (BOOL)detailDrawerVisibile;
 
