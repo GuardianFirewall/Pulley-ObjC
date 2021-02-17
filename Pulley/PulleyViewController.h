@@ -323,8 +323,16 @@ Change the current drawer content view controller (The one inside the drawer)
  - returns: A newly created Pulley drawer.
  */
 - (instancetype)initWithContentViewController:(UIViewController *)contentViewController drawerViewController:(UIViewController *)drawerViewController;
-
+/**
+ Show a secondary 'detail' view controller inside a new drawer that is overlayed on top of the current drawer. Similar to the maps application
+ 
+ -parameter detailsViewController: The new drawers content view controller. This view controller is show inside of the new secondary drawer
+ 
+ */
 - (void)showDetailsViewInDrawer:(UIViewController *)detailsViewController;
+
+// Dismiss the secondary 'detail' drawer
 - (void)dismissDetailViewController;
+
 @end
 
